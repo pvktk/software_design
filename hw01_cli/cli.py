@@ -226,6 +226,7 @@ class line_executer:
                     raise e
                 else:
                     print(e)
+                    return ''
         return pipe
     
 #REPL
