@@ -63,6 +63,26 @@ class exit_command:
     def run_on(self, pipe_arg, arglist):
         raise Exception('exit')
 
+#Команда 'cd'.
+class cd_command:
+    def __init__(self):
+        pass
+    def run_on(self, pipe_arg, arglist):
+        os.chdir(arglist[0])
+        return ""
+
+#Команда 'ls'
+class ls_command:
+    def __init__(self):
+        pass
+    def run_on(self, pipe_arg, arglist):
+        if len(arglist) == 0:
+            a = os.listdir(".")
+        else:
+            a = os.listdir(arglist[0])
+        a = [x for x in a if x[0] != '.']
+        return "\n".join(a) + "\n"
+
 #Класс, который исполняет выделенную команду с разбитыми на список аргументами
 #Определяет, внешняя команда или внутренняя
 class command_executer:
@@ -71,7 +91,9 @@ class command_executer:
                                      'exit' : exit_command(),
                                      'echo' : echo_command(),
                                      'wc' : wc_command(),
-                                     'pwd' : pwd_command()}
+                                     'pwd' : pwd_command(),
+                                     'cd' : cd_command(),
+                                     'ls' : ls_command()}
         self.sys_comm = system_commands()
 #метод для исполния распарсенной строки. Возвращает результат в виде строки.
     def execute(self, pipe_arg, command_name, arglist):
@@ -191,7 +213,7 @@ class parser:
                         res[-1].pop()
                     res.append([''])
                 continue
- 
+
             res[-1][-1] += c
         if res[-1][-1] == '':
             res[-1].pop()
@@ -228,7 +250,7 @@ class line_executer:
                     print(e)
                     return ''
         return pipe
-    
+
 #REPL
 if __name__ == '__main__':
     lexec = line_executer()
