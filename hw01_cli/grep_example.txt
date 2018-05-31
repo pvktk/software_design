@@ -1,0 +1,21 @@
+"""
+Класс для вычисления результата исполнения всей строки
+Использует всё перечисленное выше.
+"""
+class line_executer:
+    def __init__(self):
+        self.parser = parser()
+        self.command_executer = command_executer()
+        self.dollar_handler = dollar_handler()
+
+    """
+    Основной метод класса. Получает на вход введённую строчку,
+    возвращает результат её вычисления.
+    """
+    def exec_line(self, inpline):
+        if self.dollar_handler.create_variable(inpline):
+            return ''
+        try:
+            inpline = self.dollar_handler.replace_dollars(inpline)
+            parse_res = self.parser.get_parsed_lists(inpline)
+        except Exception as e:
