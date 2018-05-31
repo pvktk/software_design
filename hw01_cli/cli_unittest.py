@@ -47,6 +47,32 @@ class SingleCommandsTest(unittest.TestCase):
 
         r = self.le.exec_line('echo 123 | wc ')
         self.assertEqual(r, '      1       1       4\n')
+    
+    def test_grep(self):
+        r = self.le.exec_line('grep command grep_example.txt')
+        r_pipe = self.le.exec_line('cat grep_example.txt | grep command')
+        self.assertEqual(r, r_pipe)
+        self.assertEqual(r, '        self.command_executer = command_executer()\n')
+        
+        r = self.le.exec_line('grep -A 1 command grep_example.txt')
+        r_pipe = self.le.exec_line('cat grep_example.txt | grep -A 1 command')
+        
+        self.assertEqual(r, r_pipe)
+        self.assertEqual(r,
+                            '        self.command_executer = command_executer()\n' +
+                            '        self.dollar_handler = dollar_handler()\n')
+        
+        r = self.le.exec_line('grep -A 1 -w command grep_example.txt')
+        self.assertEqual(r, '')
+        
+        r = self.le.exec_line('grep -A 1 coMmand grep_example.txt')
+        self.assertEqual(r, '')
+        
+        r = self.le.exec_line('grep -i coMmand grep_example.txt')
+        self.assertEqual(r, '        self.command_executer = command_executer()\n')
+        
+        r = self.le.exec_line('grep -w co[m]+and_.*uter grep_example.txt')
+        self.assertEqual(r, '        self.command_executer = command_executer()\n')
 
 class ComplexTests(unittest.TestCase):
     def setUp(self):

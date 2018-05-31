@@ -1,6 +1,7 @@
 import subprocess
 import string
 import os
+import re
 
 """
 Класс, вызывающий внешние комманды
@@ -79,3 +80,57 @@ class exit_command:
 class grep_command:
     def run_on(self, pipe_arg, arglist):
         
+        countArgs = 0
+        
+        nlines = 0
+        if arglist.count('-A') > 0:
+            idx = arglist.index('-A')
+            snum = arglist[idx+1]
+            if not snum.isdigit():
+                return 'grep: parameter for -A option is invalid\n'
+            nlines = int(snum)
+            countArgs += 2
+        
+        onlyWholeWord = False
+        if arglist.count('-w') > 0:
+            onlyWholeWord = True
+            countArgs += 1
+        
+        caseIns = False
+        if arglist.count('-i') > 0:
+            caseIns = True
+            countArgs += 1
+        
+        lines = []
+        pattern = ''
+        if len(arglist) - countArgs > 2:
+            return 'grep: arguments are invalid\n'
+        
+        if len(arglist) - countArgs == 2:
+            pattern = arglist[-2]
+            filename = arglist[-1]
+            with open(filename, 'r') as f:
+                lines = f.read().splitlines()
+        
+        if len(arglist) - countArgs == 1:
+            pattern = arglist[-1]
+            lines = pipe_arg.split('\n')
+        
+        if len(arglist) - countArgs < 1:
+            return "grep: no pattern specified\n"
+        
+        if onlyWholeWord:
+            pattern = r'\W' + pattern + r'\W'
+        
+        pattern = '.*' + pattern + '.*'
+        if caseIns:
+            regexp = re.compile(pattern, flags = re.IGNORECASE)
+        else:
+            regexp = re.compile(pattern)
+        
+        res = ''
+        for i in range(len(lines)):
+            if regexp.match(lines[i]):
+                res += ('\n'.join(lines[i:i + nlines + 1])) + '\n'
+
+        return res

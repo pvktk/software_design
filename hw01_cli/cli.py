@@ -16,7 +16,9 @@ class command_executer:
                                      'exit' : exit_command(),
                                      'echo' : echo_command(),
                                      'wc' : wc_command(),
-                                     'pwd' : pwd_command()}
+                                     'pwd' : pwd_command(),
+                                     'grep' : grep_command()
+                                     }
         self.sys_comm = system_commands()
     """
     метод для исполнения распарсенной строки. Возвращает результат в виде строки.
