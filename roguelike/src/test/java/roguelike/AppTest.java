@@ -1,38 +1,47 @@
 package roguelike;
 
-import junit.framework.Test;
+import java.io.IOException;
+
+import javax.swing.JPanel;
+
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest 
-    extends TestCase
-{
-    /**
-     * Create the test case
-     *
-     * @param testName name of the test case
-     */
-    public AppTest( String testName )
-    {
-        super( testName );
-    }
-
-    /**
-     * @return the suite of tests being tested
-     */
-    public static Test suite()
-    {
-        return new TestSuite( AppTest.class );
-    }
-
-    /**
-     * Rigourous Test :-)
-     */
-    public void testApp()
-    {
-        assertTrue( true );
-    }
+public class AppTest extends TestCase {
+    
+	public void testLabirintBorders() throws IOException, InvalidLabirintException {
+		Labirint testLab = new Labirint("testlab");
+		
+		MainHeroBot mb = testLab.getMainBot();
+		
+		LabirintItemsUpdater itemUpd = new LabirintItemsUpdater(testLab, new JPanel());
+		
+		assertEquals(1, mb.getX());
+		
+		mb.setVx(1);
+		
+		assertEquals(0, itemUpd.IterateOnce());
+		
+		assertEquals(1, mb.getX());
+		assertEquals(0, mb.getY());
+	}
+	
+	public void testBrickSolidity() throws IOException, InvalidLabirintException {
+		Labirint testLab = new Labirint("testlab");
+		
+		MainHeroBot mb = testLab.getMainBot();
+		
+		LabirintItemsUpdater itemUpd = new LabirintItemsUpdater(testLab, new JPanel());
+		
+		assertEquals(1, mb.getX());
+		
+		mb.setVx(-1);
+		
+		assertEquals(0, itemUpd.IterateOnce());
+		
+		assertEquals(1, mb.getX());
+		assertEquals(0, mb.getY());
+	}
 }

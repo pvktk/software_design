@@ -15,5 +15,5 @@
 
 ```
 mvn install
-java -cp target/classes/ roguelike.RogueStarter
+mvn exec:java -Dexec.mainClass=roguelike.RogueStarter
 ```

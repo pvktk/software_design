@@ -9,6 +9,9 @@ import javax.swing.JPanel;
 
 import roguelike.MainHeroBot.Weapon;
 
+/*
+ * Класс, обеспечивающий взаимодействие между объектами в лабиринте и обновляющий их состояния
+ */
 public class LabirintItemsUpdater implements Runnable {
 	
 	private Labirint lab;
@@ -24,102 +27,134 @@ public class LabirintItemsUpdater implements Runnable {
 
 	@Override
 	public void run() {
-a:		while (true) {
-			try {
-				Thread.sleep(50);
-			} catch (InterruptedException e) {
+		while (true) {
+			int ret = IterateOnce();
+			if (ret == -1) {
+				break;
 			}
-			
-			//System.out.println("Updating labirint");
-			for (WithCoordsAndSpeed ob : lab.listCoord) {
-				if (!ob.getClass().isAssignableFrom(Brick.class)) {
-					//System.out.println("updatind coords" + lab.mainBot.x + " " + lab.mainBot.y);
-					int dx = ob.vx;
-					int dy = ob.vy;
-					
-					if (ob.x + dx >= lab.width || ob.x + dx < 0) {
+		}
+	}
+	
+	public int IterateOnce() {
+		try {
+			Thread.sleep(50);
+		} catch (InterruptedException e) {
+		}
+		
+		/*
+		 * Перебираем все объекты, кроме кирпичей
+		 */
+		for (WithCoordsAndSpeed ob : lab.getListCoord()) {
+			if (!ob.getClass().isAssignableFrom(Brick.class)) {
+				int dx = ob.getVx();
+				int dy = ob.getVy();
+				
+				/*
+				 * Проверяем выход за границы поля
+				 */
+				if (ob.getX() + dx >= lab.getWidth() || ob.getX() + dx < 0) {
+					dx = 0;
+				}
+				
+				if (ob.getY() + dy >= lab.getHeight() || ob.getY() + dy < 0) {
+					dy = 0;
+				}
+				
+				/*
+				 * Проверяем, нет ли на пути другого твёрдого объекта. Если есть, то обнуляем перемещение.
+				 */
+				for (WithCoordsAndSpeed ob2 : lab.getListCoord()) {
+					if (ob.getX() + dx == ob2.getX() && ob.getY() == ob2.getY() && !ob2.isTransparent) {
 						dx = 0;
 					}
 					
-					if (ob.y + dy >= lab.height || ob.y + dy < 0) {
+					if (ob.getY() + dy == ob2.getY() && ob.getX() == ob2.getX() && !ob2.isTransparent) {
 						dy = 0;
 					}
 					
-					for (WithCoordsAndSpeed ob2 : lab.listCoord) {
-						if (ob.x + dx == ob2.x && ob.y == ob2.y && !ob2.isTransparent) {
-							dx = 0;
-						}
-						
-						if (ob.y + dy == ob2.y && ob.x == ob2.x && !ob2.isTransparent) {
-							dy = 0;
-						}
-						
-					}
-					
-					ob.x += dx;
-					ob.vx = 0;
-					ob.y += dy;
-					ob.vy = 0;
+				}
+				
+				ob.setX(ob.getX() + dx);
+				ob.setVx(0);
+				ob.setY(ob.getY() + dy);
+				ob.setVy(0);
+			}
+		}
+		/*
+		 * Если наш бот пришел к источнику жизни, то подзаряжаем его.
+		 */
+		MainHeroBot mb = lab.getMainBot();
+		for (SourceOfLife src : lab.getListSrc()) {
+			if (src.getX() == mb.getX() && src.getY() == mb.getY()) {
+				mb.setLife(mb.getLife() + 10);
+				if (mb.getLife() > MainHeroBot.maxLife) {
+					mb.setLife(MainHeroBot.maxLife);
 				}
 			}
+		}
+		
+		/*
+		 * Перебираем всех зомби-ботов и обеспечиваем взаимодействие с ними с учетом настроек оружия.
+		 */
+		for (ZombeeBot zb : lab.getListZomb()) {
+			if (zb.getLife() <= 0)
+				continue;
 			
-			MainHeroBot mb = lab.mainBot;
-			for (SourceOfLife src : lab.listSrc) {
-				if (src.x == mb.x && src.y == mb.y) {
-					mb.life += 10;
-					if (mb.life > MainHeroBot.maxLife) {
-						mb.life = MainHeroBot.maxLife;
-					}
-				}
-			}
+			int dx = zb.getX() - mb.getX();
+			int dy = zb.getY() - mb.getY();
 			
-			for (ZombeeBot zb : lab.listZomb) {
-				if (zb.life <= 0)
-					continue;
-				
-				int dx = zb.x - mb.x;
-				int dy = zb.y - mb.y;
-				
-				if (dx == 0 && Math.abs(dy) <= 1
-						|| dy == 0 && Math.abs(dx) <= 1)
-				{
-					if (mb.weapon == Weapon.Knife && dx == mb.weaponX && dy == mb.weaponY) {
-						zb.life -= ZombeeBot.decLife;
-						if (zb.life <= 0) {
-							zb.isTransparent = true;
-							killedZombies++;
-							if (killedZombies >= lab.listZomb.size()) {
-								Graphics g = panel.getGraphics();
-								g.setColor(Color.RED);
-								g.setFont(new Font(Font.SERIF, Font.PLAIN,  50));
-								g.drawString("VICTORY!", 10, 60);
-								break a;
-							}
-						}
-					}
-					
-					if (!(mb.weapon == Weapon.Shield && dx == mb.weaponX && dy == mb.weaponY)) {
-						mb.life -= MainHeroBot.decLife;
-						if (mb.life <= 0) {
+			if (dx == 0 && Math.abs(dy) <= 1
+					|| dy == 0 && Math.abs(dx) <= 1)
+			{
+				if (mb.weapon == Weapon.Knife && dx == mb.getWeaponX() && dy == mb.getWeaponY()) {
+					zb.setLife(zb.getLife() - ZombeeBot.decLife);
+					if (zb.getLife() <= 0) {
+						zb.isTransparent = true;
+						killedZombies++;
+						if (killedZombies >= lab.getListZomb().size()) {
+							/*
+							 * Если все зомби побеждены, то мы выиграли.
+							 */
 							Graphics g = panel.getGraphics();
 							g.setColor(Color.RED);
 							g.setFont(new Font(Font.SERIF, Font.PLAIN,  50));
-							g.drawString("GAME OVER", 10, 60);
-							break a;
+							g.drawString("VICTORY!", 10, 60);
+							RogueStarter.logger.info("User won");
+							return -1;
 						}
 					}
 				}
-			}
-			
-			for (ZombeeBot zb : lab.listZomb) {
-				if (zb.life > 0) {
-					zb.vx = getRandVel();
-					zb.vy = getRandVel();
+				
+				if (!(mb.weapon == Weapon.Shield && dx == mb.getWeaponX() && dy == mb.getWeaponY())) {
+					mb.setLife(mb.getLife() - MainHeroBot.decLife);
+					if (mb.getLife() <= 0) {
+						/*
+						 * У нашего бота кончились жизни, мы проиграли
+						 */
+						Graphics g = panel.getGraphics();
+						g.setColor(Color.RED);
+						g.setFont(new Font(Font.SERIF, Font.PLAIN,  50));
+						g.drawString("GAME OVER", 10, 60);
+						RogueStarter.logger.info("User lost");
+						return -1;
+					}
 				}
 			}
-			
-			panel.repaint();
 		}
+		
+		/*
+		 * Придаём зомби-ботам движение.
+		 */
+		for (ZombeeBot zb : lab.getListZomb()) {
+			if (zb.getLife() > 0) {
+				zb.setVx(getRandVel());
+				zb.setVy(getRandVel());
+			}
+		}
+		
+		panel.repaint();
+		
+		return 0;
 	}
 	
 	int getRandVel() {
